@@ -5,100 +5,72 @@ class Knight
     #possible moves of knight
     @x = [2, 1, -1, -2, -2, -1, 1, 2]
     @y = [1, 2, 2, 1, -1, -2, -2, -1]
-    @start_node = Node.new(@start)
-    @finish_node = Node.new(@finish)
-    @@visited = [@start_node]
   end
-  
-  # def generate_children(node = @start_node, end_node = nil)
-  #   return @start_node.children if node.value = @finish
 
-  #   @x.each_with_index do |num, index|
-  #     x = num + node.value[0]
-  #     y = @y[index] + node.value[1]
-  #     if [x, y] == @finish
-  #       node.children = nil
-  #     elsif valid?([x, y])
-  #       @@visited << [x, y]
-  #       new_node = Node.new([x, y])
-  #       node.children << new_node
-  #       end_node == new_node
-  #     end
-  #   end
-  #   node.children.each do |child|
-  #     generate_children(child)
-  #   end
-  #   @start_node
-  # end
-
-  # def create_graph(root = generate_children.children)
-  #   arr = []
-  #   root.each do |n|
-  #     arr << n
-  #   end
-  #   unless arr.empty?
-  #     current = arr.shift
-  #     if current.value == @finish
-  #       p "yay that finish #{current}"
-  #     end
-  #   end
-  # end
-
-
-  def generate_moves(coord = @start_node.value)
+  def generate_moves(coord)
+    moves = []
     visited = []
-    queue = []
-    queue.push(@start_node)
     visited << coord
-    current = @start_node
-    until current == @finish || queue.empty?
-      "Queue is #{queue}"
-      current = queue.shift
-      @x.each_with_index do |num, index|
-        x = num + current.value[0]
-        y = @y[index] + current.value[1]
-        if [x, y] == @finish
-          finish_node = Node.new([x, y])
-          current.children << finish_node
-          break
-        elsif valid?([x, y]) && visited.none?([x, y])
-          node = Node.new([x, y])
-          current.children << node
-          queue.push(node)
-          visited << [x, y]
-        end
+    @x.each_with_index do |num, index|
+      x = num + coord[0]
+      y = @y[index] + coord[1]
+      if valid?([x, y]) && visited.none?([x, y])
+        visited << [x, y]
+        moves << [x, y]
       end
     end
-    @start_node
+    moves
+  end
+  
+  def make_graph
+    queue = [Node.new(@start)]
+    current = queue.shift
+    until current.value == @finish
+      move = generate_moves(current.value)
+      move.each do |n|
+        node = Node.new(n, current)
+        queue << node
+        current.children << node
+      end
+      current = queue.shift
+    end
+    current
   end
 
-  def node_search
-    node = generate_moves
-    queue = []
-    node.children.each do |n|
-      p "node is #{n.children}"
+  def moves_history(current, history = [])
+    until current.value == @start
+      history << current
+      current = current.parent
     end
+    history << current
+    history
+  end
+
+  def path(path)
+    path.each {|n| p n.value}
+  end
+
+  def knight_move
+    finish_line = make_graph
+    history = moves_history(finish_line)
+    path(history.reverse)
   end
 
   def valid?(coord)
-    unless @@visited.include?(coord)
-      coord[0] >= 0 && coord[0] < 8 && coord[1] >= 0 && coord[1] < 8 ? true : false
-    end
+    coord[0] >= 0 && coord[0] < 8 && coord[1] >= 0 && coord[1] < 8 ? true : false
   end
 end
 
-
-
 class Node
-  attr_accessor :value, :children
+  attr_accessor :value, :children, :parent
 
-  def initialize(value)
+  def initialize(value, parent = nil)
     @value = value
+    @parent = parent
     @children = []
   end
 
 end
 
-new_knight = Knight.new([0, 0], [2, 2])
-new_knight.generate_moves
-new_knight.node_search
+new_knight = Knight.new([0, 0], [7, 7])
+new_knight.knight_move
